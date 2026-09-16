@@ -44,7 +44,7 @@ Section "Install"
   File /r "${INST_DIR}\web\*"
 
   SetOutPath $INSTDIR\jieba_dict
-  File /r "${INST_DIR}\jieba_dict\*"
+  File /nonfatal /r "${INST_DIR}\jieba_dict\*"
 
   ; Reset output path and write uninstaller
   SetOutPath $INSTDIR
