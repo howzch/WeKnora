@@ -154,9 +154,19 @@ jobs:
           if [ -d frontend/dist ]; then
             cp -r frontend/dist/* "${INST_DIR}/web/"
           fi
-          JIEBA_SRC="$(go env GOMODCACHE)/github.com/yanyiwu/gojieba@v1.4.5/deps/cppjieba/dict"
+          JIEBA_VER=$(go list -m -f "{{.Version}}" github.com/yanyiwu/gojieba 2>/dev/null || grep gojieba go.mod | awk "{print \$2}")
+          echo "Detected gojieba version: ${JIEBA_VER}"
+          JIEBA_SRC="$(go env GOMODCACHE)/github.com/yanyiwu/gojieba@${JIEBA_VER}/deps/cppjieba/dict"
           if [ -d "${JIEBA_SRC}" ]; then
             cp "${JIEBA_SRC}"/{jieba.dict.utf8,hmm_model.utf8,user.dict.utf8,idf.utf8,stop_words.utf8} "${INST_DIR}/jieba_dict/"
+          fi
+          # Hard check: jieba dictionaries are required for Chinese tokenization
+          JIEBA_COUNT=$(ls -1 "${INST_DIR}/jieba_dict/" 2>/dev/null | wc -l)
+          echo "jieba_dict file count: ${JIEBA_COUNT}"
+          if [ "${JIEBA_COUNT}" -lt 5 ]; then
+            echo "::error::jieba_dict incomplete (${JIEBA_COUNT}/5 files). Expected: jieba.dict.utf8 hmm_model.utf8 user.dict.utf8 idf.utf8 stop_words.utf8 from ${JIEBA_SRC}"
+            ls -la "$(go env GOMODCACHE)/github.com/yanyiwu/" 2>/dev/null || true
+            exit 1
           fi
 
           OUTNAME="WeKnora-Lite-App_${VERSION}_windows_amd64_setup.exe"
